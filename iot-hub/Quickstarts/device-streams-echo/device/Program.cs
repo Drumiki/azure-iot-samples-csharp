@@ -19,8 +19,8 @@ namespace Microsoft.Azure.Devices.Client.Samples
 
         // Select one of the following transports used by DeviceClient to connect to IoT Hub.
         //private static TransportType s_transportType = TransportType.Amqp;
-        //private static TransportType s_transportType = TransportType.Mqtt;
-        private static TransportType s_transportType = TransportType.Amqp_WebSocket_Only;
+        private static TransportType s_transportType = TransportType.Mqtt;
+        //private static TransportType s_transportType = TransportType.Amqp_WebSocket_Only;
         //private static TransportType s_transportType = TransportType.Mqtt_WebSocket_Only;
 
         public static int Main(string[] args)
@@ -37,16 +37,35 @@ namespace Microsoft.Azure.Devices.Client.Samples
                 return 1;
             }
 
-            using (ModuleClient moduleClient = ModuleClient.CreateFromConnectionString(s_deviceConnectionString, s_transportType))
+            if(s_deviceConnectionString.Contains("ModuleId="))
             {
-                if (moduleClient == null)
+                Console.WriteLine("Creating a module client using " + s_transportType);
+                using (ModuleClient moduleClient = ModuleClient.CreateFromConnectionString(s_deviceConnectionString, s_transportType))
                 {
-                    Console.WriteLine("Failed to create DeviceClient!");
-                    return 1;
-                }
+                    if (moduleClient == null)
+                    {
+                        Console.WriteLine("Failed to create DeviceClient!");
+                        return 1;
+                    }
 
-                var sample = new DeviceStreamSample(null, moduleClient);
-                sample.RunSampleAsync().GetAwaiter().GetResult();
+                    var sample = new DeviceStreamSample(null, moduleClient);
+                    sample.RunSampleAsync().GetAwaiter().GetResult();
+                }
+            }
+            else
+            {
+                Console.WriteLine("Creating a device client using " + s_transportType);
+                using (DeviceClient deviceClient = DeviceClient.CreateFromConnectionString(s_deviceConnectionString, s_transportType))
+                {
+                    if (deviceClient == null)
+                    {
+                        Console.WriteLine("Failed to create ModuleClient!");
+                        return 1;
+                    }
+
+                    var sample = new DeviceStreamSample(deviceClient, null);
+                    sample.RunSampleAsync().GetAwaiter().GetResult();
+                }
             }
 
             Console.WriteLine("Done.\n");
