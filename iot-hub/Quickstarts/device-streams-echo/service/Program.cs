@@ -21,6 +21,8 @@ namespace Microsoft.Azure.Devices.Samples
         // - create a launchSettings.json (see launchSettings.json.template) containing the variable
         private static string s_deviceId = Environment.GetEnvironmentVariable("DEVICE_ID");
 
+        private static string s_moduleId = Environment.GetEnvironmentVariable("MODULE_ID");
+
         // Select one of the following transports used by ServiceClient to connect to IoT Hub.
         private static TransportType s_transportType = TransportType.Amqp;
         //private static TransportType s_transportType = TransportType.Amqp_WebSocket_Only;
@@ -37,6 +39,11 @@ namespace Microsoft.Azure.Devices.Samples
                 s_deviceId = args[1];
             }
 
+            if (string.IsNullOrEmpty(s_moduleId) && args.Length > 2)
+            {
+                s_moduleId = args[2];
+            }
+
             if (string.IsNullOrEmpty(s_connectionString) ||
                 string.IsNullOrEmpty(s_deviceId))
             {
@@ -47,7 +54,7 @@ namespace Microsoft.Azure.Devices.Samples
 
             using (ServiceClient serviceClient = ServiceClient.CreateFromConnectionString(s_connectionString, s_transportType))
             {
-                var sample = new DeviceStreamSample(serviceClient, s_deviceId);
+                var sample = new DeviceStreamSample(serviceClient, s_deviceId, s_moduleId);
                 sample.RunSampleAsync().GetAwaiter().GetResult();
             }
 

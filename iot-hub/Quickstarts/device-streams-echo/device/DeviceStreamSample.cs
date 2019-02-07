@@ -13,10 +13,16 @@ namespace Microsoft.Azure.Devices.Client.Samples
     public class DeviceStreamSample
     {
         private DeviceClient _deviceClient;
+        private ModuleClient _moduleClient;
 
-        public DeviceStreamSample(DeviceClient deviceClient)
+        public DeviceStreamSample(DeviceClient deviceClient, ModuleClient moduleClient)
         {
+            if(deviceClient == null && moduleClient == null)
+            {
+                throw new Exception("No device client or module client..");
+            }
             _deviceClient = deviceClient;
+            _moduleClient = moduleClient;
         }
 
         public async Task RunSampleAsync()
@@ -30,13 +36,28 @@ namespace Microsoft.Azure.Devices.Client.Samples
 
             using (var cancellationTokenSource = new CancellationTokenSource(TimeSpan.FromMinutes(5)))
             {
-                DeviceStreamRequest streamRequest = await _deviceClient.WaitForDeviceStreamRequestAsync(cancellationTokenSource.Token).ConfigureAwait(false);
-
+                DeviceStreamRequest streamRequest = null;
+                if (this._deviceClient != null)
+                {
+                    streamRequest = await _deviceClient.WaitForDeviceStreamRequestAsync(cancellationTokenSource.Token).ConfigureAwait(false);
+                }
+                else if (this._moduleClient != null)
+                {
+                    streamRequest = await _moduleClient.WaitForDeviceStreamRequestAsync(cancellationTokenSource.Token).ConfigureAwait(false);
+                }
+                
                 if (streamRequest != null)
                 {
                     if (acceptDeviceStreamingRequest)
                     {
-                        await _deviceClient.AcceptDeviceStreamRequestAsync(streamRequest, cancellationTokenSource.Token).ConfigureAwait(false);
+                        if (this._deviceClient != null)
+                        {
+                            await _deviceClient.AcceptDeviceStreamRequestAsync(streamRequest, cancellationTokenSource.Token).ConfigureAwait(false);
+                        }
+                        else if (this._moduleClient != null)
+                        {
+                            await _moduleClient.AcceptDeviceStreamRequestAsync(streamRequest, cancellationTokenSource.Token).ConfigureAwait(false);
+                        }
 
                         using (ClientWebSocket webSocket = await DeviceStreamingCommon.GetStreamingClientAsync(streamRequest.Url, streamRequest.AuthorizationToken, cancellationTokenSource.Token).ConfigureAwait(false))
                         {
@@ -51,11 +72,26 @@ namespace Microsoft.Azure.Devices.Client.Samples
                     }
                     else
                     {
-                        await _deviceClient.RejectDeviceStreamRequestAsync(streamRequest, cancellationTokenSource.Token).ConfigureAwait(false);
+                        if (this._deviceClient != null)
+                        {
+                            await _deviceClient.RejectDeviceStreamRequestAsync(streamRequest, cancellationTokenSource.Token).ConfigureAwait(false);
+                        }
+                        else if (this._moduleClient != null)
+                        {
+                            await _moduleClient.RejectDeviceStreamRequestAsync(streamRequest, cancellationTokenSource.Token).ConfigureAwait(false);
+                        }
                     }
                 }
 
-                await _deviceClient.CloseAsync().ConfigureAwait(false);
+                if (this._deviceClient != null)
+                {
+                    await _deviceClient.CloseAsync().ConfigureAwait(false);
+                }
+                else if (this._moduleClient != null)
+                {
+                    await _moduleClient.CloseAsync().ConfigureAwait(false);
+                }
+                
             }
         }
     }

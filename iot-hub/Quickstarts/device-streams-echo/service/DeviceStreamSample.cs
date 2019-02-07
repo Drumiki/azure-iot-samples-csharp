@@ -15,11 +15,13 @@ namespace Microsoft.Azure.Devices.Samples
     {
         private ServiceClient _serviceClient;
         private String _deviceId;
+        private String _moduleId;
 
-        public DeviceStreamSample(ServiceClient deviceClient, String deviceId)
+        public DeviceStreamSample(ServiceClient deviceClient, String deviceId, String moduleId)
         {
             _serviceClient = deviceClient;
             _deviceId = deviceId;
+            _moduleId = moduleId;
         }
         
         public async Task RunSampleAsync()
@@ -30,7 +32,15 @@ namespace Microsoft.Azure.Devices.Samples
                     streamName: "TestStream"
                 );
 
-                DeviceStreamResponse result = await _serviceClient.CreateStreamAsync(_deviceId, deviceStreamRequest).ConfigureAwait(false);
+                DeviceStreamResponse result;
+                if (_moduleId != null)
+                {
+                   result = await _serviceClient.CreateStreamAsync(_deviceId, _moduleId, deviceStreamRequest).ConfigureAwait(false);
+                }
+                else
+                {
+                    result = await _serviceClient.CreateStreamAsync(_deviceId, deviceStreamRequest).ConfigureAwait(false);
+                }
 
                 Console.WriteLine("Stream response received: Name={0} IsAccepted={1}", deviceStreamRequest.StreamName, result.IsAccepted);
 
